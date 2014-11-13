@@ -8,20 +8,46 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.telephony.SmsManager;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
 
 public class SendSmsActivity extends Activity {
 	EditText phoneNumber;
 	EditText message;
-
+	TextView textLimit;
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.send_sms_activity);
 		phoneNumber = (EditText) findViewById(R.id.phoneNumberInput);
 		message = (EditText) findViewById(R.id.messageInput);
+		textLimit = (TextView) findViewById(R.id.textLimit);
+		
+		message.addTextChangedListener(new TextWatcher() {
+
+			@Override
+			public void afterTextChanged(Editable arg0) {
+				textLimit.setText(message.length()+"/160");
+			}
+
+			@Override
+			public void beforeTextChanged(CharSequence s, int start, int count,
+					int after) {
+				// TODO Auto-generated method stub
+				
+			}
+
+			@Override
+			public void onTextChanged(CharSequence s, int start, int before,
+					int count) {
+				// TODO Auto-generated method stub
+				
+			}
+	       });
 	}
 
 	public void sendSmsOnClickEvent(View view) {

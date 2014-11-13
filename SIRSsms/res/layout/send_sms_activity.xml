@@ -26,17 +26,10 @@
         android:layout_below="@+id/messageLbl"
         android:layout_marginTop="28dp"
         android:ems="10"
-        android:inputType="textMultiLine" />
-
-    <TextView
-        android:id="@+id/messageLbl"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignLeft="@+id/messageInput"
-        android:layout_below="@+id/phoneNumberInput"
-        android:layout_marginTop="38dp"
-        android:text="Message:"
-        android:textAppearance="?android:attr/textAppearanceMedium" />
+        android:height="200dp"
+        android:inputType="textMultiLine"
+        android:maxHeight="200dp"
+        android:maxLength="160" />
 
     <TextView
         android:id="@+id/phoneNumberLbl"
@@ -48,14 +41,34 @@
         android:text="Phone Number:"
         android:textAppearance="?android:attr/textAppearanceMedium" />
 
+    <TextView
+        android:id="@+id/messageLbl"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/phoneNumberInput"
+        android:layout_below="@+id/phoneNumberInput"
+        android:layout_marginTop="20dp"
+        android:maxLength="160"
+        android:text="Message:"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
     <Button
         android:id="@+id/sendBtn"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/messageInput"
-        android:layout_marginTop="81dp"
+        android:layout_alignParentBottom="true"
+        android:layout_marginBottom="24dp"
         android:layout_toRightOf="@+id/messageLbl"
         android:onClick="sendSmsOnClickEvent"
         android:text="Send" />
+
+    <TextView
+        android:id="@+id/textLimit"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignRight="@+id/messageInput"
+        android:layout_below="@+id/messageInput"
+        android:text="0/160"
+        android:textAppearance="?android:attr/textAppearanceSmall" />
 
 </RelativeLayout>
