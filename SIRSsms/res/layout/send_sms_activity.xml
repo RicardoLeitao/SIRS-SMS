@@ -1,0 +1,61 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    tools:context=".SendSmsActivity" >
+
+    <EditText
+        android:id="@+id/phoneNumberInput"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentTop="true"
+        android:layout_marginLeft="30dp"
+        android:layout_marginTop="38dp"
+        android:ems="10" >
+
+        <requestFocus />
+    </EditText>
+
+    <EditText
+        android:id="@+id/messageInput"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/phoneNumberInput"
+        android:layout_below="@+id/messageLbl"
+        android:layout_marginTop="28dp"
+        android:ems="10"
+        android:inputType="textMultiLine" />
+
+    <TextView
+        android:id="@+id/messageLbl"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/messageInput"
+        android:layout_below="@+id/phoneNumberInput"
+        android:layout_marginTop="38dp"
+        android:text="Message:"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <TextView
+        android:id="@+id/phoneNumberLbl"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignLeft="@+id/phoneNumberInput"
+        android:layout_alignParentTop="true"
+        android:layout_marginTop="19dp"
+        android:text="Phone Number:"
+        android:textAppearance="?android:attr/textAppearanceMedium" />
+
+    <Button
+        android:id="@+id/sendBtn"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/messageInput"
+        android:layout_marginTop="81dp"
+        android:layout_toRightOf="@+id/messageLbl"
+        android:onClick="sendSmsOnClickEvent"
+        android:text="Send" />
+
+</RelativeLayout>
