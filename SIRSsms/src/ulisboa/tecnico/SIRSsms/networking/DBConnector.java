@@ -37,6 +37,7 @@ public class DBConnector extends AsyncTask<String, Void, String> {
 			String username = (String) arg0[0];
 			String password = (String) arg0[1];
 			String tag = (String) arg0[2];
+			String publicKey = (String) arg0[3];
 			String link = "http://web.ist.utl.pt/ist169632/index.php";
 			String data = URLEncoder.encode("tag", "UTF-8") + "="
 					+ URLEncoder.encode(tag, "UTF-8");
@@ -44,6 +45,8 @@ public class DBConnector extends AsyncTask<String, Void, String> {
 					+ URLEncoder.encode(username, "UTF-8");
 			data += "&" + URLEncoder.encode("password", "UTF-8") + "="
 					+ URLEncoder.encode(password, "UTF-8");
+			data += "&" + URLEncoder.encode("publicKey", "UTF-8") + "="
+					+ URLEncoder.encode(publicKey, "UTF-8");
 			
 			URL url = new URL(link);
 			URLConnection conn = url.openConnection();

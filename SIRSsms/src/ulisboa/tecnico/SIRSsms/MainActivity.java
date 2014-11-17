@@ -1,5 +1,7 @@
 package ulisboa.tecnico.SIRSsms;
 
+import java.security.GeneralSecurityException;
+
 import ulisboa.tecnico.SIRSsms.networking.DBConnector;
 import android.os.Bundle;
 import android.app.Activity;
@@ -43,6 +45,10 @@ public class MainActivity extends Activity {
         String pwd = passwordET.getText().toString();
         String getSimSerialNumber = telemamanger.getLine1Number();
         TextView tv = (TextView)findViewById(R.id.textView1);
-        new DBConnector(this,tv).execute(getSimSerialNumber,pwd,"register");
+        try{
+        	RSAKeyPair keyPair =  new RSAKeyPair(2048);
+        	new DBConnector(this,tv).execute(getSimSerialNumber,pwd,"register",keyPair.getPublicKey().getEncoded().toString());
+        } catch(GeneralSecurityException e){  	
+        }
     }
 }
