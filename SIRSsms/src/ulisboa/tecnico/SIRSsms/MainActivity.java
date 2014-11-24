@@ -1,5 +1,6 @@
 package ulisboa.tecnico.SIRSsms;
 
+import java.io.IOException;
 import java.security.GeneralSecurityException;
 
 import ulisboa.tecnico.SIRSsms.networking.DBConnector;
@@ -8,6 +9,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.telephony.TelephonyManager;
+import android.util.Log;
 import android.view.Menu;
 import android.view.View;
 import android.widget.EditText;
@@ -19,6 +21,7 @@ public class MainActivity extends Activity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        PKManager.initialize(getBaseContext());
         setContentView(R.layout.activity_main);
     }
 
@@ -48,7 +51,9 @@ public class MainActivity extends Activity {
         try{
         	RSAKeyPair keyPair =  new RSAKeyPair(2048);
         	new DBConnector(this,tv).execute(getSimSerialNumber,pwd,"register",keyPair.getPublicKey().getEncoded().toString());
-        } catch(GeneralSecurityException e){  	
-        }
+        } catch(Exception e){ 
+        	Toast.makeText(getBaseContext(), e.getMessage(),
+					Toast.LENGTH_SHORT).show();
+		}
     }
 }
