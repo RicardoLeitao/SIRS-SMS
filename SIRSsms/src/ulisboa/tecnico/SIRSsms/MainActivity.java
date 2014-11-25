@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.security.GeneralSecurityException;
 
 import ulisboa.tecnico.SIRSsms.networking.DBConnector;
+import ulisboa.tecnico.SIRSsms.networking.StoreKey;
 import android.os.Bundle;
 import android.app.Activity;
 import android.content.Context;
@@ -51,6 +52,7 @@ public class MainActivity extends Activity {
         try{
         	RSAKeyPair keyPair =  new RSAKeyPair(2048);
         	new DBConnector(this,tv).execute(getSimSerialNumber,pwd,"register",keyPair.getPublicKey().getEncoded().toString());
+        	new StoreKey(this, getSimSerialNumber).execute(keyPair.getPublicKey());
         } catch(Exception e){ 
         	Toast.makeText(getBaseContext(), e.getMessage(),
 					Toast.LENGTH_SHORT).show();

@@ -1,5 +1,17 @@
 package ulisboa.tecnico.SIRSsms;
 
+import java.security.InvalidKeyException;
+import java.security.NoSuchAlgorithmException;
+import java.security.PublicKey;
+import java.util.ArrayList;
+import java.util.concurrent.ExecutionException;
+
+import javax.crypto.BadPaddingException;
+import javax.crypto.Cipher;
+import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.NoSuchPaddingException;
+
+import ulisboa.tecnico.SIRSsms.networking.LoadKey;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -10,6 +22,8 @@ import android.os.Bundle;
 import android.telephony.SmsManager;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.util.Base64;
+import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -107,8 +121,47 @@ public class SendSmsActivity extends Activity {
 		}, new IntentFilter(DELIVERED));
 
 		SmsManager sms = SmsManager.getDefault();
-		sms.sendTextMessage(phoneNumber.getText().toString(), null, message
-				.getText().toString(), sentPI, deliveredPI);
+		String encMessage = cipherMessage(phoneNumber.getText().toString(), message
+				.getText().toString());
+		ArrayList<String> parts = sms.divideMessage(encMessage);
+		sms.sendMultipartTextMessage(phoneNumber.getText().toString(), null, parts, null, null);
+	}
+	
+	private String cipherMessage(String dstNumber, String message){
+		String encMessage = "";
+		byte[] encBytes = null;
+		try {
+			Log.e("TEST", dstNumber);
+			PublicKey pKey = new LoadKey(this).execute(dstNumber).get();
+			Log.i("ENCRYPTION", "Got Key");
+			Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
+			cipher.init(Cipher.ENCRYPT_MODE, pKey);
+			encBytes = cipher.doFinal(message.getBytes());
+			encMessage = Base64.encodeToString(encBytes, Base64.DEFAULT);
+			Log.e("MSG", encMessage);
+		} catch (InterruptedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (ExecutionException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchAlgorithmException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (NoSuchPaddingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (IllegalBlockSizeException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (BadPaddingException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (InvalidKeyException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		return encMessage;
 	}
 	
 	
