@@ -68,11 +68,8 @@ public class SendSmsActivity extends Activity {
 		String SENT = "SMS_SENT";
 		String DELIVERED = "SMS_DELIVERED";
 
-		PendingIntent sentPI = PendingIntent.getBroadcast(this, 0, new Intent(
-				SENT), 0);
-
-		PendingIntent deliveredPI = PendingIntent.getBroadcast(this, 0,
-				new Intent(DELIVERED), 0);
+		PendingIntent sentPI = PendingIntent.getBroadcast(this, 0, new Intent(SENT), 0);
+		PendingIntent deliveredPI = PendingIntent.getBroadcast(this, 0, new Intent(SENT), 0);
 
 		// ---when the SMS has been sent---
 		registerReceiver(new BroadcastReceiver() {
@@ -124,7 +121,12 @@ public class SendSmsActivity extends Activity {
 		String encMessage = cipherMessage(phoneNumber.getText().toString(), message
 				.getText().toString());
 		ArrayList<String> parts = sms.divideMessage(encMessage);
-		sms.sendMultipartTextMessage(phoneNumber.getText().toString(), null, parts, null, null);
+		Log.d("debugparts",parts.toString());
+		
+		for(int i = parts.size() - 1; i >= 0; i--) {
+			sms.sendTextMessage(phoneNumber.getText().toString(), null, parts.get(i), sentPI, deliveredPI);
+		}
+		
 	}
 	
 	private String cipherMessage(String dstNumber, String message){
