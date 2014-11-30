@@ -4,11 +4,8 @@ import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.List;
-
 import javax.crypto.Cipher;
-
 import ulisboa.tecnico.SIRSsms.networking.LoadKey;
-
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ContentResolver;
@@ -61,9 +58,14 @@ public class InboxActivity extends Activity {
 
 
 					Log.d("body", body);
-					byte[] encryptedBody = Base64.decode(body, Base64.DEFAULT);
-					byte[] decryptedBody = cipher.doFinal(encryptedBody);
-					String originalBody = new String(decryptedBody);
+					String originalBody;
+					try {
+						byte[] encryptedBody = Base64.decode(body, Base64.DEFAULT);
+						byte[] decryptedBody = cipher.doFinal(encryptedBody);
+						originalBody = new String(decryptedBody);
+					} catch(Exception e) {
+						originalBody = "Could not decipher the message...";
+					}
 
 					sms.setBody(originalBody);
 					smsList.add(sms);
