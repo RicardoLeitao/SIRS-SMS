@@ -1,10 +1,14 @@
 package ulisboa.tecnico.SIRSsms;
 
+import java.io.ByteArrayOutputStream;
 import java.security.PrivateKey;
 import java.security.PublicKey;
 import java.util.ArrayList;
 import java.util.List;
 import javax.crypto.Cipher;
+import javax.crypto.Mac;
+import javax.crypto.spec.SecretKeySpec;
+
 import ulisboa.tecnico.SIRSsms.networking.LoadKey;
 import android.annotation.SuppressLint;
 import android.app.Activity;
@@ -62,7 +66,36 @@ public class InboxActivity extends Activity {
 					try {
 						byte[] encryptedBody = Base64.decode(body, Base64.DEFAULT);
 						byte[] decryptedBody = cipher.doFinal(encryptedBody);
-						originalBody = new String(decryptedBody);
+						
+						byte[] messageBytes = new byte[decryptedBody.length - 2];
+						byte[] hash = new byte[2];
+						
+						System.arraycopy(decryptedBody, 0, 
+								messageBytes, 0, decryptedBody.length - 2);
+						System.arraycopy(decryptedBody, decryptedBody.length - 2, 
+								hash, 0,2);
+						
+						originalBody = new String(messageBytes);
+						//Verify integrity with HMac
+						Mac hmac = Mac.getInstance("HmacSHA256");
+						hmac.init(new SecretKeySpec(PKManager.getHmackey(), "HmacSHA256"));
+						
+						byte[] signature = hmac.doFinal(originalBody.getBytes());
+						byte[] lastBlock = new byte[2];
+						lastBlock[0] = signature[signature.length - 2];
+						lastBlock[1] = signature[signature.length - 1];
+						
+						if(Base64.encodeToString(hash, Base64.DEFAULT).equals(
+								Base64.encodeToString(lastBlock, Base64.DEFAULT)))
+							Log.d("Integrity check","Yup it was not modified" + " = " +
+									Base64.encodeToString(lastBlock, Base64.DEFAULT));
+						else Log.d("Integrity check",Base64.encodeToString(hash, Base64.DEFAULT) + "!=" + 
+								Base64.encodeToString(lastBlock, Base64.DEFAULT) + 
+								" Hmm isto ja nao esta de acordo com o que devia ser");
+						//
+						
+						Log.d("OriginalBody",originalBody + Base64.encodeToString(hash, Base64.DEFAULT) +
+								Base64.encodeToString(lastBlock, Base64.DEFAULT));
 					} catch(Exception e) {
 						originalBody = "Could not decipher the message...";
 					}

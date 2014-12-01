@@ -1,16 +1,24 @@
 package ulisboa.tecnico.SIRSsms;
 
+import java.io.IOException;
 import java.security.InvalidKeyException;
+import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.security.UnrecoverableKeyException;
+import java.security.cert.CertificateException;
 import java.util.ArrayList;
 import java.util.concurrent.ExecutionException;
 
 import javax.crypto.BadPaddingException;
 import javax.crypto.Cipher;
 import javax.crypto.IllegalBlockSizeException;
+import javax.crypto.Mac;
 import javax.crypto.NoSuchPaddingException;
+import javax.crypto.spec.SecretKeySpec;
 
+import ulisboa.tecnico.SIRSsms.networking.DBConnector;
 import ulisboa.tecnico.SIRSsms.networking.LoadKey;
 import android.app.Activity;
 import android.app.PendingIntent;
@@ -20,6 +28,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.telephony.SmsManager;
+import android.telephony.TelephonyManager;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.util.Base64;
@@ -38,6 +47,7 @@ public class SendSmsActivity extends Activity {
 		super.onCreate(savedInstanceState);
 		setContentView(R.layout.send_sms_activity);
 		phoneNumber = (EditText) findViewById(R.id.phoneNumberInput);
+		phoneNumber.setText("1555521555");
 		message = (EditText) findViewById(R.id.messageInput);
 		textLimit = (TextView) findViewById(R.id.textLimit);
 		
@@ -116,7 +126,8 @@ public class SendSmsActivity extends Activity {
 				}
 			}
 		}, new IntentFilter(DELIVERED));
-
+        TelephonyManager telemamanger = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+        String senderPhoneNumber = telemamanger.getLine1Number();
 		SmsManager sms = SmsManager.getDefault();
 		String encMessage = cipherMessage(phoneNumber.getText().toString(), message
 				.getText().toString());
@@ -133,13 +144,28 @@ public class SendSmsActivity extends Activity {
 		String encMessage = "";
 		byte[] encBytes = null;
 		try {
-			Log.e("TEST", dstNumber);
-			PublicKey pKey = new LoadKey(this).execute(dstNumber).get();
-			Log.i("ENCRYPTION", "Got Key");
+			//Applies HMac with SHA256 to the body message
+			Mac hmac = Mac.getInstance("HmacSHA256");
+			hmac.init(new SecretKeySpec(PKManager.getHmackey(), "HmacSHA256"));
+			byte[] signature = hmac.doFinal(message.getBytes());
+			
+			//Last block for sha-256 has block_size = 512 last 4 hexs
+			byte[] encBlock = new byte[2];
+			encBlock[0] = signature[signature.length - 2];
+			encBlock[1] = signature[signature.length - 1];
+			Log.d("Hash",Base64.encodeToString(encBlock , Base64.DEFAULT));
+			byte[] bytes = new byte[message.getBytes().length + 2];
+			System.arraycopy(message.getBytes(), 0, bytes, 0, message.getBytes().length);
+			System.arraycopy(encBlock, 0, bytes, message.getBytes().length, 2);
+			
+			//Ciphers hash with public key
+			PublicKey pubKey = new LoadKey(this).execute(dstNumber).get();
 			Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-			cipher.init(Cipher.ENCRYPT_MODE, pKey);
-			encBytes = cipher.doFinal(message.getBytes());
-			encMessage = Base64.encodeToString(encBytes, Base64.DEFAULT);
+			cipher.init(Cipher.ENCRYPT_MODE, pubKey);
+			encBytes = cipher.doFinal(bytes);
+			
+			encMessage = Base64.encodeToString(encBytes , Base64.DEFAULT);
+			
 			Log.e("MSG", encMessage);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
@@ -160,6 +186,9 @@ public class SendSmsActivity extends Activity {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} catch (InvalidKeyException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}

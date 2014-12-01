@@ -31,7 +31,8 @@ import android.content.Context;
 public abstract class PKManager {
 
 	private static final String BC = BouncyCastleProvider.PROVIDER_NAME;
-	public static final String FILENAME = ".PK";
+	private static final String FILENAME = ".PK";
+	public static final byte[] hmacKey = "d6cfaad283353507".getBytes();
 	public static Context ctx = null;
 	public static char[] passWord = null;
 
@@ -134,6 +135,10 @@ public abstract class PKManager {
 
 	public static void setPassWord(char[] passWord) {
 		PKManager.passWord = passWord;
+	}
+
+	public static byte[] getHmackey() {
+		return hmacKey;
 	}
 
 }
