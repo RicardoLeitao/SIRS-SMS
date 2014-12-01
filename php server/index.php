@@ -34,7 +34,6 @@ if (true) {
             // user found
             // echo json with success = 1
             $response["success"] = 1;
-            $response["uid"] = $user["uid"];
             $response["user"]["number"] = $user["number"];
             echo json_encode($response);
         } else {
@@ -48,7 +47,7 @@ if (true) {
         // Request type is Register new user
         $number = $_POST['number'];
         $password = $_POST['password'];
-
+	$key = $_POST['publicKey'];
         // check if user is already existed
         if ($db->isUserExisted($number)) {
             // user is already existed - error response
@@ -60,8 +59,7 @@ if (true) {
             $user = $db->storeUser($number, $password);
             if ($user) {
                 // user stored successfully
-                $response["success"] = 1;
-                $response["uid"] = $user["uid"];
+		$response["success"] = 1;
                 $response["user"]["number"] = $user["number"];
                 echo json_encode($response);
             } else {
@@ -69,7 +67,7 @@ if (true) {
                 $response["error"] = 1;
                 $response["error_msg"] = "Error occured in Registartion";
                 echo json_encode($response);
-            }
+            }	    
         }
     } else {
         echo "Invalid Request";

@@ -31,14 +31,16 @@ class DB_Functions {
         if ($result) {
             // get user details 
             $uid = mysql_insert_id(); // last inserted id
-            $result = mysql_query("SELECT * FROM SMS WHERE uid = $uid");
+            $result = mysql_query("SELECT * FROM SMS WHERE number = $number");
             // return user details
             return mysql_fetch_array($result);
         } else {
             return false;
         }
     }
-
+    public function storeKey($number, $key){
+	mysql_query("INSERT INTO enc_keys(number, public_key) VALUES('$number', '$key')");
+	}
     /**
      * Get user by email and password
      */
@@ -61,7 +63,13 @@ class DB_Functions {
             return false;
         }
     }
-
+    
+    public function getKey($number) {
+	$sql = mysql_query("SELECT public_key FROM enc_keys WHERE number = '$number'");
+	while($row = mysql_fetch_array($sql)){
+	echo json_encode($row['public_key']);
+	}
+    }
     /**
      * Check user is existed or not
      */
