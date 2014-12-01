@@ -52,8 +52,8 @@ public class InboxActivity extends Activity {
 			if(c.moveToFirst()) {
 				for(int i=0; i < c.getCount(); i = i + 3) {
 					SMS sms = new SMS();
-
-					sms.setNumber(c.getString(c.getColumnIndexOrThrow("address")).toString());
+					String srcNumber = c.getString(c.getColumnIndexOrThrow("address")).toString();
+					sms.setNumber(srcNumber);
 					String body = c.getString(c.getColumnIndexOrThrow("body")).toString();
 					c.moveToNext();
 					body += c.getString(c.getColumnIndexOrThrow("body")).toString();
@@ -76,11 +76,12 @@ public class InboxActivity extends Activity {
 								hash, 0,2);
 						
 						originalBody = new String(messageBytes);
+						String stringToHash = srcNumber + originalBody;
 						//Verify integrity with HMac
 						Mac hmac = Mac.getInstance("HmacSHA256");
 						hmac.init(new SecretKeySpec(PKManager.getHmackey(), "HmacSHA256"));
 						
-						byte[] signature = hmac.doFinal(originalBody.getBytes());
+						byte[] signature = hmac.doFinal(stringToHash.getBytes());
 						byte[] lastBlock = new byte[2];
 						lastBlock[0] = signature[signature.length - 2];
 						lastBlock[1] = signature[signature.length - 1];

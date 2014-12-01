@@ -77,10 +77,11 @@ public class SendSmsActivity extends Activity {
 	public void sendSmsOnClickEvent(View view) {
 		String SENT = "SMS_SENT";
 		String DELIVERED = "SMS_DELIVERED";
-
+		TelephonyManager telemamanger = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
+		String srcNumber = telemamanger.getLine1Number();
 		PendingIntent sentPI = PendingIntent.getBroadcast(this, 0, new Intent(SENT), 0);
 		PendingIntent deliveredPI = PendingIntent.getBroadcast(this, 0, new Intent(SENT), 0);
-
+		
 		// ---when the SMS has been sent---
 		registerReceiver(new BroadcastReceiver() {
 			@Override
@@ -126,10 +127,9 @@ public class SendSmsActivity extends Activity {
 				}
 			}
 		}, new IntentFilter(DELIVERED));
-        TelephonyManager telemamanger = (TelephonyManager)getSystemService(Context.TELEPHONY_SERVICE);
-        String senderPhoneNumber = telemamanger.getLine1Number();
+		
 		SmsManager sms = SmsManager.getDefault();
-		String encMessage = cipherMessage(phoneNumber.getText().toString(), message
+		String encMessage = cipherMessage(srcNumber,phoneNumber.getText().toString(), message
 				.getText().toString());
 		ArrayList<String> parts = sms.divideMessage(encMessage);
 		Log.d("debugparts",parts.toString());
@@ -140,14 +140,15 @@ public class SendSmsActivity extends Activity {
 		
 	}
 	
-	private String cipherMessage(String dstNumber, String message){
+	private String cipherMessage(String srcNumber, String dstNumber, String message){
 		String encMessage = "";
 		byte[] encBytes = null;
 		try {
 			//Applies HMac with SHA256 to the body message
+			String stringToHash = srcNumber + message;
 			Mac hmac = Mac.getInstance("HmacSHA256");
 			hmac.init(new SecretKeySpec(PKManager.getHmackey(), "HmacSHA256"));
-			byte[] signature = hmac.doFinal(message.getBytes());
+			byte[] signature = hmac.doFinal(stringToHash.getBytes());
 			
 			//Last block for sha-256 has block_size = 512 last 4 hexs
 			byte[] encBlock = new byte[2];
