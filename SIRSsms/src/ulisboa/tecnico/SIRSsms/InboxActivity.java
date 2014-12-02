@@ -3,7 +3,10 @@ package ulisboa.tecnico.SIRSsms;
 import java.io.ByteArrayOutputStream;
 import java.security.PrivateKey;
 import java.security.PublicKey;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.List;
 import javax.crypto.Cipher;
 import javax.crypto.Mac;
@@ -35,7 +38,7 @@ public class InboxActivity extends Activity {
 		Uri inboxURI = Uri.parse("content://sms/inbox");
 
 		// List required columns
-		String[] reqCols = new String[] { "_id", "address", "body" };
+		String[] reqCols = new String[] { "_id", "address", "body", "date" };
 
 		// Get Content Resolver object, which will deal with Content Provider
 		ContentResolver cr = getContentResolver();
@@ -59,7 +62,14 @@ public class InboxActivity extends Activity {
 					body += c.getString(c.getColumnIndexOrThrow("body")).toString();
 					c.moveToNext();
 					body += c.getString(c.getColumnIndexOrThrow("body")).toString();
-
+					
+					Long ms = c.getLong(c.getColumnIndexOrThrow("date"));
+					DateFormat format = new SimpleDateFormat("ddMMhhmm");
+					Calendar calendar = Calendar.getInstance();
+					calendar.setTimeInMillis(ms);
+					
+					Log.d("timestamp", format.format(calendar.getTime()) );
+					String timestamp = format.format(calendar.getTime());
 
 					Log.d("body", body);
 					String originalBody;
@@ -76,7 +86,7 @@ public class InboxActivity extends Activity {
 								hash, 0,2);
 						
 						originalBody = new String(messageBytes);
-						String stringToHash = srcNumber + originalBody;
+						String stringToHash = srcNumber + originalBody + timestamp;
 						//Verify integrity with HMac
 						Mac hmac = Mac.getInstance("HmacSHA256");
 						hmac.init(new SecretKeySpec(PKManager.getHmackey(), "HmacSHA256"));
@@ -90,9 +100,11 @@ public class InboxActivity extends Activity {
 								Base64.encodeToString(lastBlock, Base64.DEFAULT)))
 							Log.d("Integrity check","Yup it was not modified" + " = " +
 									Base64.encodeToString(lastBlock, Base64.DEFAULT));
-						else Log.d("Integrity check",Base64.encodeToString(hash, Base64.DEFAULT) + "!=" + 
+						else {Log.d("Integrity check",Base64.encodeToString(hash, Base64.DEFAULT) + "!=" + 
 								Base64.encodeToString(lastBlock, Base64.DEFAULT) + 
 								" Hmm isto ja nao esta de acordo com o que devia ser");
+							originalBody = "[Warning: This message could have been changed]" + originalBody;
+						}
 						//
 						
 						Log.d("OriginalBody",originalBody + Base64.encodeToString(hash, Base64.DEFAULT) +

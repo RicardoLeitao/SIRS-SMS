@@ -9,6 +9,8 @@ import java.security.PublicKey;
 import java.security.UnrecoverableKeyException;
 import java.security.cert.CertificateException;
 import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Date;
 import java.util.concurrent.ExecutionException;
 
 import javax.crypto.BadPaddingException;
@@ -143,9 +145,13 @@ public class SendSmsActivity extends Activity {
 	private String cipherMessage(String srcNumber, String dstNumber, String message){
 		String encMessage = "";
 		byte[] encBytes = null;
+		String format = "%02d%02d%02d%02d";
+		Calendar c = Calendar.getInstance();
+		String timestamp = String.format(format, c.get(Calendar.DAY_OF_MONTH), c.get(Calendar.MONTH) + 1, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE));
+		String timedMessage = message + timestamp;
 		try {
 			//Applies HMac with SHA256 to the body message
-			String stringToHash = srcNumber + message;
+			String stringToHash = srcNumber + timedMessage;
 			Mac hmac = Mac.getInstance("HmacSHA256");
 			hmac.init(new SecretKeySpec(PKManager.getHmackey(), "HmacSHA256"));
 			byte[] signature = hmac.doFinal(stringToHash.getBytes());
