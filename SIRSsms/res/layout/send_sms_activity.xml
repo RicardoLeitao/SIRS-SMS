@@ -29,7 +29,7 @@
         android:height="200dp"
         android:inputType="textMultiLine"
         android:maxHeight="200dp"
-        android:maxLength="160" />
+        android:maxLength="252" />
 
     <TextView
         android:id="@+id/phoneNumberLbl"

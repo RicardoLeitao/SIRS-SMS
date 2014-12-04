@@ -135,8 +135,9 @@ public class SendSmsActivity extends Activity {
 		SmsManager sms = SmsManager.getDefault();
 		String encMessage = cipherMessage(srcNumber,phoneNumber.getText().toString(), message
 				.getText().toString());
-		
-		ArrayList<String> parts = sms.divideMessage(encMessage);
+	
+		ArrayList<String> parts = sms.divideMessage(new StringBuilder(encMessage).
+				insert(0,":encryptedsms:").toString());
 		Log.d("debugparts",parts.toString());
 
 		for(int i = parts.size() - 1; i >= 0; i--) {
