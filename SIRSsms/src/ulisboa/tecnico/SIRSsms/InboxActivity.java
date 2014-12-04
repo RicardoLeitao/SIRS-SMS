@@ -26,7 +26,7 @@ import android.widget.ListView;
 @SuppressLint("TrulyRandom")
 public class InboxActivity extends Activity {
 	private ListView lvMsg;
-	@SuppressLint("TrulyRandom")
+	@SuppressLint({ "TrulyRandom", "SimpleDateFormat" })
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
 		super.onCreate(savedInstanceState);
@@ -47,11 +47,6 @@ public class InboxActivity extends Activity {
 		Cursor c = cr.query(inboxURI, reqCols, null, null, null);
 
 		try {
-			PrivateKey pk = PKManager.get();
-
-			Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
-			cipher.init(Cipher.DECRYPT_MODE, pk);
-
 			if(c.moveToFirst()) {
 				for(int i=0; i < c.getCount(); i = i + 3) {
 					SMS sms = new SMS();
@@ -64,7 +59,7 @@ public class InboxActivity extends Activity {
 					body += c.getString(c.getColumnIndexOrThrow("body")).toString();
 					
 					Long ms = c.getLong(c.getColumnIndexOrThrow("date"));
-					DateFormat format = new SimpleDateFormat("ddMMhhmm");
+					DateFormat format = new SimpleDateFormat("ddMMHHmm");
 					Calendar calendar = Calendar.getInstance();
 					calendar.setTimeInMillis(ms);
 					
@@ -75,15 +70,24 @@ public class InboxActivity extends Activity {
 					String originalBody;
 					try {
 						byte[] encryptedBody = Base64.decode(body, Base64.DEFAULT);
-						byte[] decryptedBody = cipher.doFinal(encryptedBody);
 						
-						byte[] messageBytes = new byte[decryptedBody.length - 2];
-						byte[] hash = new byte[2];
+						// Decripts with private
+						Cipher cipher = Cipher.getInstance("RSA");
+						cipher.init(Cipher.DECRYPT_MODE, PKManager.get());
+						byte[] decryptedWithPrivate = cipher.doFinal(encryptedBody);
+						
+						// Decripts with the source's public key
+						PublicKey pubKey = new LoadKey(this).execute(srcNumber).get();
+						cipher.init(Cipher.DECRYPT_MODE, pubKey);
+						byte[] decryptedBody = cipher.doFinal(decryptedWithPrivate);
+						
+						byte[] messageBytes = new byte[decryptedBody.length - 4];
+						byte[] hash = new byte[4];
 						
 						System.arraycopy(decryptedBody, 0, 
-								messageBytes, 0, decryptedBody.length - 2);
-						System.arraycopy(decryptedBody, decryptedBody.length - 2, 
-								hash, 0,2);
+								messageBytes, 0, decryptedBody.length - 4);
+						System.arraycopy(decryptedBody, decryptedBody.length - 4, 
+								hash, 0,4);
 						
 						originalBody = new String(messageBytes);
 						String stringToHash = srcNumber + originalBody + timestamp;
@@ -92,9 +96,11 @@ public class InboxActivity extends Activity {
 						hmac.init(new SecretKeySpec(PKManager.getHmackey(), "HmacSHA256"));
 						
 						byte[] signature = hmac.doFinal(stringToHash.getBytes());
-						byte[] lastBlock = new byte[2];
-						lastBlock[0] = signature[signature.length - 2];
-						lastBlock[1] = signature[signature.length - 1];
+						byte[] lastBlock = new byte[4];
+						lastBlock[0] = signature[signature.length - 4];
+						lastBlock[1] = signature[signature.length - 3];
+						lastBlock[2] = signature[signature.length - 2];
+						lastBlock[3] = signature[signature.length - 1];
 						
 						if(Base64.encodeToString(hash, Base64.DEFAULT).equals(
 								Base64.encodeToString(lastBlock, Base64.DEFAULT)))

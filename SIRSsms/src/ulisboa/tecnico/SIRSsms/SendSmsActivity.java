@@ -22,6 +22,7 @@ import javax.crypto.spec.SecretKeySpec;
 
 import ulisboa.tecnico.SIRSsms.networking.DBConnector;
 import ulisboa.tecnico.SIRSsms.networking.LoadKey;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
@@ -40,6 +41,7 @@ import android.widget.EditText;
 import android.widget.TextView;
 import android.widget.Toast;
 
+@SuppressLint("TrulyRandom")
 public class SendSmsActivity extends Activity {
 	EditText phoneNumber;
 	EditText message;
@@ -52,28 +54,28 @@ public class SendSmsActivity extends Activity {
 		phoneNumber.setText("1555521555");
 		message = (EditText) findViewById(R.id.messageInput);
 		textLimit = (TextView) findViewById(R.id.textLimit);
-		
+
 		message.addTextChangedListener(new TextWatcher() {
 
 			@Override
 			public void afterTextChanged(Editable arg0) {
-				textLimit.setText(message.length()+"/160");
+				textLimit.setText(message.length()+"/252");
 			}
 
 			@Override
 			public void beforeTextChanged(CharSequence s, int start, int count,
 					int after) {
 				// TODO Auto-generated method stub
-				
+
 			}
 
 			@Override
 			public void onTextChanged(CharSequence s, int start, int before,
 					int count) {
 				// TODO Auto-generated method stub
-				
+
 			}
-	       });
+		});
 	}
 
 	public void sendSmsOnClickEvent(View view) {
@@ -83,7 +85,7 @@ public class SendSmsActivity extends Activity {
 		String srcNumber = telemamanger.getLine1Number();
 		PendingIntent sentPI = PendingIntent.getBroadcast(this, 0, new Intent(SENT), 0);
 		PendingIntent deliveredPI = PendingIntent.getBroadcast(this, 0, new Intent(SENT), 0);
-		
+
 		// ---when the SMS has been sent---
 		registerReceiver(new BroadcastReceiver() {
 			@Override
@@ -129,50 +131,59 @@ public class SendSmsActivity extends Activity {
 				}
 			}
 		}, new IntentFilter(DELIVERED));
-		
+
 		SmsManager sms = SmsManager.getDefault();
 		String encMessage = cipherMessage(srcNumber,phoneNumber.getText().toString(), message
 				.getText().toString());
+		
 		ArrayList<String> parts = sms.divideMessage(encMessage);
 		Log.d("debugparts",parts.toString());
-		
+
 		for(int i = parts.size() - 1; i >= 0; i--) {
 			sms.sendTextMessage(phoneNumber.getText().toString(), null, parts.get(i), sentPI, deliveredPI);
 		}
-		
+
 	}
-	
+
 	private String cipherMessage(String srcNumber, String dstNumber, String message){
 		String encMessage = "";
-		byte[] encBytes = null;
 		String format = "%02d%02d%02d%02d";
 		Calendar c = Calendar.getInstance();
 		String timestamp = String.format(format, c.get(Calendar.DAY_OF_MONTH), c.get(Calendar.MONTH) + 1, c.get(Calendar.HOUR_OF_DAY), c.get(Calendar.MINUTE));
 		String timedMessage = message + timestamp;
+		Log.d("Timestamp",timestamp);
 		try {
 			//Applies HMac with SHA256 to the body message
 			String stringToHash = srcNumber + timedMessage;
 			Mac hmac = Mac.getInstance("HmacSHA256");
 			hmac.init(new SecretKeySpec(PKManager.getHmackey(), "HmacSHA256"));
 			byte[] signature = hmac.doFinal(stringToHash.getBytes());
-			
+
 			//Last block for sha-256 has block_size = 512 last 4 hexs
-			byte[] encBlock = new byte[2];
-			encBlock[0] = signature[signature.length - 2];
-			encBlock[1] = signature[signature.length - 1];
+			byte[] encBlock = new byte[4];
+			encBlock[0] = signature[signature.length - 4];
+			encBlock[1] = signature[signature.length - 3];
+			encBlock[2] = signature[signature.length - 2];
+			encBlock[3] = signature[signature.length - 1];
 			Log.d("Hash",Base64.encodeToString(encBlock , Base64.DEFAULT));
-			byte[] bytes = new byte[message.getBytes().length + 2];
+			
+			//
+			byte[] bytes = new byte[message.getBytes().length + 4];
 			System.arraycopy(message.getBytes(), 0, bytes, 0, message.getBytes().length);
-			System.arraycopy(encBlock, 0, bytes, message.getBytes().length, 2);
+			System.arraycopy(encBlock, 0, bytes, message.getBytes().length, 4);
+
+			//Ciphers message + hash with private key
+			Cipher cipher = Cipher.getInstance("RSA");
+			cipher.init(Cipher.ENCRYPT_MODE, PKManager.get());
+			byte[] cipheredWithPrivate = cipher.doFinal(bytes);
 			
-			//Ciphers hash with public key
+			//Ciphers again with the public key
 			PublicKey pubKey = new LoadKey(this).execute(dstNumber).get();
-			Cipher cipher = Cipher.getInstance("RSA/ECB/PKCS1Padding");
 			cipher.init(Cipher.ENCRYPT_MODE, pubKey);
-			encBytes = cipher.doFinal(bytes);
-			
-			encMessage = Base64.encodeToString(encBytes , Base64.DEFAULT);
-			
+			byte[] reCipheredWithPublic = cipher.doFinal(cipheredWithPrivate);
+
+			encMessage = Base64.encodeToString(reCipheredWithPublic , Base64.DEFAULT);
+
 			Log.e("MSG", encMessage);
 		} catch (InterruptedException e) {
 			// TODO Auto-generated catch block
@@ -201,6 +212,6 @@ public class SendSmsActivity extends Activity {
 		}
 		return encMessage;
 	}
-	
-	
+
+
 }
