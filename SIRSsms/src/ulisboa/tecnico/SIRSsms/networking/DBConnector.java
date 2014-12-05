@@ -78,6 +78,10 @@ public class DBConnector extends AsyncTask<String, Void, String> {
 				Toast.makeText(context,tag + " success",Toast.LENGTH_SHORT).show();
 		        Intent intent = new Intent(context, HomeActivity.class);
 		        context.startActivity(intent);
+			}else if(errorCode == 2){ 
+				Toast.makeText(context,tag + " success. Public Key replaced!",Toast.LENGTH_SHORT).show();
+		        Intent intent = new Intent(context, HomeActivity.class);
+		        context.startActivity(intent);
 			}else{
 				String errorMsg = jObject.getString("error_msg");
 				Toast.makeText(context,tag + " fail." + errorMsg,Toast.LENGTH_SHORT).show();
