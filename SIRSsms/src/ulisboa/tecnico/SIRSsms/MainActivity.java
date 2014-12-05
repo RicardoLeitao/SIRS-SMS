@@ -26,6 +26,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.res.AssetManager;
 import android.telephony.TelephonyManager;
+import android.util.Base64;
 import android.util.Log;
 import android.view.Menu;
 import android.view.View;
@@ -65,35 +66,11 @@ public class MainActivity extends Activity {
         String pwd = passwordET.getText().toString();
         String getSimSerialNumber = telemamanger.getLine1Number();
         TextView tv = (TextView)findViewById(R.id.textView1);
-        CaPublicKey caKey = new CaPublicKey(getApplicationContext());
-        PublicKey caPK = caKey.getCAKey();
-        byte[] password = null;
-        byte[] number = null;
-		try {
-	        Cipher cipher = Cipher.getInstance("RSA");
-			cipher.init(Cipher.ENCRYPT_MODE, caPK);
-			password = cipher.doFinal(pwd.getBytes());
-			number = cipher.doFinal(getSimSerialNumber.getBytes());
-			Log.w("CA_KEY", "##MAIN ACTIVITY LINE77## " + password.toString() + number.toString());
-		} catch (IllegalBlockSizeException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (BadPaddingException e1) {
-			// TODO Auto-generated catch block
-			e1.printStackTrace();
-		} catch (NoSuchAlgorithmException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (NoSuchPaddingException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (InvalidKeyException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+
+
         try{
         	RSAKeyPair keyPair =  new RSAKeyPair(2048);
-        	new DBConnector(this,tv).execute(number.toString(),password.toString(),"register",keyPair.getPublicKey().getEncoded().toString());
+        	new DBConnector(this,tv).execute(getSimSerialNumber,pwd,"register",keyPair.getPublicKey().getEncoded().toString());
         	new StoreKey(this, getSimSerialNumber).execute(keyPair.getPublicKey());
         } catch(Exception e){ 
         	Toast.makeText(getBaseContext(), e.getMessage(),
